@@ -15,34 +15,6 @@
 #define SX1278_MAX_PACKET	256
 #define SX1278_DEFAULT_TIMEOUT		3000
 
-//Error Coding rate (CR)setting
-#define SX1278_CR_4_5
-//#define SX1278_CR_4_6
-//#define SX1278_CR_4_7
-//#define SX1278_CR_4_8
-#ifdef   SX1278_CR_4_5
-#define SX1278_CR	0x01
-#else
-#ifdef   SX1278_CR_4_6
-#define SX1278_CR    0x02
-#else
-#ifdef   SX1278_CR_4_7
-#define SX1278_CR    0x03
-#else
-#ifdef   SX1278_CR_4_8
-#define SX1278_CR    0x04
-#endif
-#endif
-#endif
-#endif
-
-//CRC Enable
-#define SX1278_CRC_EN
-#ifdef  SX1278_CRC_EN
-#define SX1278_CRC   0x01
-#else
-#define SX1278_CRC   0x00
-#endif
 //RFM98 Internal registers Address
 /********************LoRa mode***************************/
 #define LR_RegFifo                                  0x00
@@ -83,6 +55,7 @@
 #define LR_RegMaxPayloadLength                      0x23
 #define LR_RegHopPeriod                             0x24
 #define LR_RegFifoRxByteAddr                        0x25
+#define LR_RegModemConfig3                          0x26
 // I/O settings
 #define REG_LR_DIOMAPPING1                          0x40
 #define REG_LR_DIOMAPPING2                          0x41
@@ -154,6 +127,7 @@
 #define  RegSeqConfig2      	0x37
 #define  RegTimerResol      	0x38
 #define  RegTimer1Coef      	0x39
+#define  RegSyncWord			0x39
 #define  RegTimer2Coef      	0x3a
 #define  RegImageCal            0x3b
 #define  RegTemp                0x3c
@@ -170,10 +144,6 @@
 /**********************************************************
  **Parameter table define
  **********************************************************/
-#define SX1278_433MHZ			0
-
-static const uint8_t SX1278_Frequency[1][3] = { { 0x6C, 0x80, 0x00 }, //434MHz
-		};
 
 #define SX1278_POWER_20DBM		0
 #define SX1278_POWER_17DBM		1
@@ -219,6 +189,20 @@ static const uint8_t SX1278_LoRaBandwidth[10] = { 0, //   7.8KHz,
 		9  // 500.0KHz
 		};
 
+//Coding rate
+#define SX1278_LORA_CR_4_5    0
+#define SX1278_LORA_CR_4_6    1
+#define SX1278_LORA_CR_4_7    2
+#define SX1278_LORA_CR_4_8    3
+
+static const uint8_t SX1278_CodingRate[4] = { 0x01, 0x02, 0x03, 0x04};
+
+//CRC Enable
+#define SX1278_LORA_CRC_EN              0
+#define SX1278_LORA_CRC_DIS             1
+
+static const uint8_t SX1278_CRC_Sum[2] = { 0x01, 0x00};
+
 typedef enum _SX1278_STATUS {
 	SLEEP, STANDBY, TX, RX
 } SX1278_Status_t;
@@ -238,10 +222,12 @@ typedef struct {
 typedef struct {
 	SX1278_hw_t * hw;
 
-	uint8_t frequency;
+	uint64_t frequency;
 	uint8_t power;
 	uint8_t LoRa_Rate;
 	uint8_t LoRa_BW;
+	uint8_t LoRa_CR;
+	uint8_t LoRa_CRC_sum;
 	uint8_t packetLength;
 
 	SX1278_Status_t status;
@@ -251,44 +237,42 @@ typedef struct {
 } SX1278_t;
 
 //hardware
-__weak void SX1278_hw_init(SX1278_hw_t * hw);
-__weak void SX1278_hw_SetNSS(SX1278_hw_t * hw, int value);
-__weak void SX1278_hw_Reset(SX1278_hw_t * hw);
-__weak void SX1278_hw_SPICommand(SX1278_hw_t * hw, uint8_t cmd);
-__weak uint8_t SX1278_hw_SPIReadByte(SX1278_hw_t * hw);
-__weak void SX1278_hw_DelayMs(uint32_t msec);
-__weak int SX1278_hw_GetDIO0(SX1278_hw_t * hw);
+void SX1278_hw_init(SX1278_hw_t * hw);
+void SX1278_hw_SetNSS(SX1278_hw_t * hw, int value);
+void SX1278_hw_Reset(SX1278_hw_t * hw);
+void SX1278_hw_SPICommand(SX1278_hw_t * hw, uint8_t cmd);
+uint8_t SX1278_hw_SPIReadByte(SX1278_hw_t * hw);
+void SX1278_hw_DelayMs(uint32_t msec);
+int SX1278_hw_GetDIO0(SX1278_hw_t * hw);
 
 //logic
 
 uint8_t SX1278_SPIRead(SX1278_t * module, uint8_t addr);
 void SX1278_SPIWrite(SX1278_t * module, uint8_t addr, uint8_t cmd);
-void SX1278_SPIBurstRead(SX1278_t * module, uint8_t addr, uint8_t *rxBuf,
+void SX1278_SPIBurstRead(SX1278_t * module, uint8_t addr, uint8_t * rxBuf,
 		uint8_t length);
-void SX1278_SPIBurstWrite(SX1278_t * module, uint8_t addr, uint8_t *txBuf,
+void SX1278_SPIBurstWrite(SX1278_t * module, uint8_t addr, uint8_t * txBuf,
 		uint8_t length);
 void SX1278_DIO0_InterruptHandler(SX1278_t * module);
 
-void SX1278_config(SX1278_t * module, uint8_t frequency, uint8_t power,
-		uint8_t LoRa_Rate, uint8_t LoRa_BW);
-void SX1278_defaultConfig(SX1278_t * module);
+void SX1278_config(SX1278_t * module);
 
 void SX1278_entryLoRa(SX1278_t * module);
 void SX1278_clearLoRaIrq(SX1278_t * module);
 int SX1278_LoRaEntryRx(SX1278_t * module, uint8_t length, uint32_t timeout);
 uint8_t SX1278_LoRaRxPacket(SX1278_t * module);
 int SX1278_LoRaEntryTx(SX1278_t * module, uint8_t length, uint32_t timeout);
-int SX1278_LoRaTxPacket(SX1278_t * module, uint8_t *txBuf, uint8_t length,
+int SX1278_LoRaTxPacket(SX1278_t * module, uint8_t * txBuf, uint8_t length,
 		uint32_t timeout);
 
-void SX1278_begin(SX1278_t * module, uint8_t frequency, uint8_t power,
-		uint8_t LoRa_Rate, uint8_t LoRa_BW, uint8_t packetLength);
+void SX1278_init(SX1278_t * module, uint64_t frequency, uint8_t power,
+		uint8_t LoRa_Rate, uint8_t LoRa_BW, uint8_t LoRa_CR, uint8_t LoRa_CRC_sum, uint8_t packetLength);
 
-int SX1278_transmit(SX1278_t * module, uint8_t *txBuf, uint8_t length,
+int SX1278_transmit(SX1278_t * module, uint8_t * txBuf, uint8_t length,
 		uint32_t timeout);
 int SX1278_(SX1278_t * module, uint8_t length, uint32_t timeoutT);
 uint8_t SX1278_available(SX1278_t * module);
-uint8_t SX1278_read(SX1278_t * module, uint8_t *rxBuf, uint8_t length);
+uint8_t SX1278_read(SX1278_t * module, uint8_t * rxBuf, uint8_t length);
 
 uint8_t SX1278_RSSI_LoRa(SX1278_t * module);
 uint8_t SX1278_RSSI(SX1278_t * module);
