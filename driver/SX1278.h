@@ -8,6 +8,9 @@
 
 #ifndef __SX1278_H__
 #define __SX1278_H__
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -209,6 +212,10 @@ typedef enum _SX1278_STATUS {
 	SLEEP, STANDBY, TX, RX
 } SX1278_Status_t;
 
+// SX127X_REG_SYNC_WORD
+#define SX127X_SYNC_WORD                              0x12        //  7     0     default LoRa sync word
+#define SX127X_SYNC_WORD_LORAWAN                      0x34        //  7     0     sync word reserved for LoRaWAN networks
+
 typedef struct {
 	SX1278_hw_t *hw;
 
@@ -219,6 +226,7 @@ typedef struct {
 	uint8_t LoRa_CR;
 	uint8_t LoRa_CRC_sum;
 	uint8_t packetLength;
+    uint8_t sync_word;
 
 	SX1278_Status_t status;
 
@@ -375,10 +383,11 @@ int SX1278_LoRaTxPacket(SX1278_t *module, uint8_t *txBuf, uint8_t length,
  * \param[in]  LoRa_CRC_sum Hardware CRC check, SX1278_LORA_CRC_EN or
  *                          SX1278_LORA_CRC_DIS
  * \param[in]  packetLength Package length, no more than 256 bytes
+ * \param[in] sync_word     sync word. Can be used to distinguish different networks. Note that value 0x34 is reserved for LoRaWAN networks.
  */
 void SX1278_init(SX1278_t *module, uint64_t frequency, uint8_t power,
 		uint8_t LoRa_SF, uint8_t LoRa_BW, uint8_t LoRa_CR,
-		uint8_t LoRa_CRC_sum, uint8_t packetLength);
+		uint8_t LoRa_CRC_sum, uint8_t packetLength, uint8_t sync_word);
 
 /**
  * \brief Entry transmitter mode and send data
@@ -480,5 +489,10 @@ void SX1278_standby(SX1278_t *module);
  * \param[in]  module	Pointer to LoRa structure
  */
 void SX1278_sleep(SX1278_t *module);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

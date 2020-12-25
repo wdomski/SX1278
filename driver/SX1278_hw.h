@@ -7,7 +7,9 @@
 
 #ifndef __SX1278_HW_HEADER
 #define __SX1278_HW_HEADER
-
+#ifdef __cplusplus
+ extern "C" {
+#endif
 #include <stdint.h>
 
 typedef struct {
@@ -90,6 +92,10 @@ void SX1278_hw_DelayMs(uint32_t msec);
  * \return				0 if DIO0 low, 1 if DIO high
  */
 int SX1278_hw_GetDIO0(SX1278_hw_t *hw);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
