@@ -68,7 +68,7 @@ void SX1278_config(SX1278_t *module) {
 	freq_reg[2] = (uint8_t) (freq >> 0);
 	SX1278_SPIBurstWrite(module, LR_RegFrMsb, (uint8_t*) freq_reg, 3); //setting  frequency parameter
 
-	SX1278_SPIWrite(module, RegSyncWord, 0x34);
+	SX1278_SPIWrite(module, RegSyncWord, module->sync_word);
 
 	//setting base parameter
 	SX1278_SPIWrite(module, LR_RegPaConfig, SX1278_Power[module->power]); //Setting output power parameter
@@ -240,7 +240,7 @@ int SX1278_LoRaTxPacket(SX1278_t *module, uint8_t *txBuffer, uint8_t length,
 
 void SX1278_init(SX1278_t *module, uint64_t frequency, uint8_t power,
 		uint8_t LoRa_SF, uint8_t LoRa_BW, uint8_t LoRa_CR,
-		uint8_t LoRa_CRC_sum, uint8_t packetLength) {
+		uint8_t LoRa_CRC_sum, uint8_t packetLength, uint8_t sync_word) {
 	SX1278_hw_init(module->hw);
 	module->frequency = frequency;
 	module->power = power;
@@ -249,6 +249,7 @@ void SX1278_init(SX1278_t *module, uint64_t frequency, uint8_t power,
 	module->LoRa_CR = LoRa_CR;
 	module->LoRa_CRC_sum = LoRa_CRC_sum;
 	module->packetLength = packetLength;
+    module->sync_word = sync_word;
 	SX1278_config(module);
 }
 
