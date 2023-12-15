@@ -9,7 +9,7 @@
 #include "SX1278.h"
 #include <string.h>
 
-uint8_t SX1278_SPIRead(SX1278_t *module, uint8_t addr) {
+uint8_t SX1278_SPIRead(SX1278_t * module, uint8_t addr) {
 	uint8_t tmp;
 	SX1278_hw_SPICommand(module->hw, addr);
 	tmp = SX1278_hw_SPIReadByte(module->hw);
@@ -17,14 +17,14 @@ uint8_t SX1278_SPIRead(SX1278_t *module, uint8_t addr) {
 	return tmp;
 }
 
-void SX1278_SPIWrite(SX1278_t *module, uint8_t addr, uint8_t cmd) {
+void SX1278_SPIWrite(SX1278_t * module, uint8_t addr, uint8_t cmd) {
 	SX1278_hw_SetNSS(module->hw, 0);
 	SX1278_hw_SPICommand(module->hw, addr | 0x80);
 	SX1278_hw_SPICommand(module->hw, cmd);
 	SX1278_hw_SetNSS(module->hw, 1);
 }
 
-void SX1278_SPIBurstRead(SX1278_t *module, uint8_t addr, uint8_t *rxBuf,
+void SX1278_SPIBurstRead(SX1278_t * module, uint8_t addr, uint8_t * rxBuf,
 		uint8_t length) {
 	uint8_t i;
 	if (length <= 1) {
@@ -39,7 +39,7 @@ void SX1278_SPIBurstRead(SX1278_t *module, uint8_t addr, uint8_t *rxBuf,
 	}
 }
 
-void SX1278_SPIBurstWrite(SX1278_t *module, uint8_t addr, uint8_t *txBuf,
+void SX1278_SPIBurstWrite(SX1278_t * module, uint8_t addr, uint8_t * txBuf,
 		uint8_t length) {
 	unsigned char i;
 	if (length <= 1) {
@@ -54,7 +54,7 @@ void SX1278_SPIBurstWrite(SX1278_t *module, uint8_t addr, uint8_t *txBuf,
 	}
 }
 
-void SX1278_config(SX1278_t *module) {
+void SX1278_config(SX1278_t * module) {
 	SX1278_sleep(module); //Change modem mode Must in Sleep mode
 	SX1278_hw_DelayMs(15);
 
@@ -68,7 +68,7 @@ void SX1278_config(SX1278_t *module) {
 	freq_reg[2] = (uint8_t) (freq >> 0);
 	SX1278_SPIBurstWrite(module, LR_RegFrMsb, (uint8_t*) freq_reg, 3); //setting  frequency parameter
 
-	SX1278_SPIWrite(module, RegSyncWord, 0x34);
+	SX1278_SPIWrite(module, RegSyncWord, module->sync_word);
 
 	//setting base parameter
 	SX1278_SPIWrite(module, LR_RegPaConfig, SX1278_Power[module->power]); //Setting output power parameter
@@ -113,25 +113,25 @@ void SX1278_config(SX1278_t *module) {
 	SX1278_standby(module); //Entry standby mode
 }
 
-void SX1278_standby(SX1278_t *module) {
+void SX1278_standby(SX1278_t * module) {
 	SX1278_SPIWrite(module, LR_RegOpMode, 0x09);
 	module->status = STANDBY;
 }
 
-void SX1278_sleep(SX1278_t *module) {
+void SX1278_sleep(SX1278_t * module) {
 	SX1278_SPIWrite(module, LR_RegOpMode, 0x08);
 	module->status = SLEEP;
 }
 
-void SX1278_entryLoRa(SX1278_t *module) {
+void SX1278_entryLoRa(SX1278_t * module) {
 	SX1278_SPIWrite(module, LR_RegOpMode, 0x88);
 }
 
-void SX1278_clearLoRaIrq(SX1278_t *module) {
+void SX1278_clearLoRaIrq(SX1278_t * module) {
 	SX1278_SPIWrite(module, LR_RegIrqFlags, 0xFF);
 }
 
-int SX1278_LoRaEntryRx(SX1278_t *module, uint8_t length, uint32_t timeout) {
+int SX1278_LoRaEntryRx(SX1278_t * module, uint8_t length, uint32_t timeout) {
 	uint8_t addr;
 
 	module->packetLength = length;
@@ -163,7 +163,7 @@ int SX1278_LoRaEntryRx(SX1278_t *module, uint8_t length, uint32_t timeout) {
 	}
 }
 
-uint8_t SX1278_LoRaRxPacket(SX1278_t *module) {
+uint8_t SX1278_LoRaRxPacket(SX1278_t * module) {
 	unsigned char addr;
 	unsigned char packet_size;
 
@@ -186,7 +186,7 @@ uint8_t SX1278_LoRaRxPacket(SX1278_t *module) {
 	return module->readBytes;
 }
 
-int SX1278_LoRaEntryTx(SX1278_t *module, uint8_t length, uint32_t timeout) {
+int SX1278_LoRaEntryTx(SX1278_t * module, uint8_t length, uint32_t timeout) {
 	uint8_t addr;
 	uint8_t temp;
 
@@ -217,7 +217,7 @@ int SX1278_LoRaEntryTx(SX1278_t *module, uint8_t length, uint32_t timeout) {
 	}
 }
 
-int SX1278_LoRaTxPacket(SX1278_t *module, uint8_t *txBuffer, uint8_t length,
+int SX1278_LoRaTxPacket(SX1278_t * module, uint8_t * txBuffer, uint8_t length,
 		uint32_t timeout) {
 	SX1278_SPIBurstWrite(module, 0x00, txBuffer, length);
 	SX1278_SPIWrite(module, LR_RegOpMode, 0x8b);	//Tx Mode
@@ -238,9 +238,9 @@ int SX1278_LoRaTxPacket(SX1278_t *module, uint8_t *txBuffer, uint8_t length,
 	}
 }
 
-void SX1278_init(SX1278_t *module, uint64_t frequency, uint8_t power,
-		uint8_t LoRa_SF, uint8_t LoRa_BW, uint8_t LoRa_CR,
-		uint8_t LoRa_CRC_sum, uint8_t packetLength) {
+void SX1278_init(SX1278_t * module, uint64_t frequency, uint8_t power,
+		uint8_t LoRa_SF, uint8_t LoRa_BW, uint8_t LoRa_CR, uint8_t LoRa_CRC_sum,
+		uint8_t packetLength) {
 	SX1278_hw_init(module->hw);
 	module->frequency = frequency;
 	module->power = power;
@@ -249,10 +249,32 @@ void SX1278_init(SX1278_t *module, uint64_t frequency, uint8_t power,
 	module->LoRa_CR = LoRa_CR;
 	module->LoRa_CRC_sum = LoRa_CRC_sum;
 	module->packetLength = packetLength;
+	module->sync_word = SX127X_SYNC_WORD_DEFAULT;
 	SX1278_config(module);
 }
 
-int SX1278_transmit(SX1278_t *module, uint8_t *txBuf, uint8_t length,
+void SX1278_init_with_sync_word(SX1278_t * module, uint64_t frequency,
+		uint8_t power, uint8_t LoRa_SF, uint8_t LoRa_BW, uint8_t LoRa_CR,
+		uint8_t LoRa_CRC_sum, uint8_t packetLength, uint8_t sync_word) {
+	SX1278_hw_init(module->hw);
+	module->frequency = frequency;
+	module->power = power;
+	module->LoRa_SF = LoRa_SF;
+	module->LoRa_BW = LoRa_BW;
+	module->LoRa_CR = LoRa_CR;
+	module->LoRa_CRC_sum = LoRa_CRC_sum;
+	module->packetLength = packetLength;
+	module->sync_word = sync_word;
+	SX1278_config(module);
+}
+
+void SX1278_set_sync_word(SX1278_t * module, uint8_t sync_word) {
+	module->sync_word = sync_word;
+	SX1278_SPIWrite(module, RegSyncWord, module->sync_word);
+	SX1278_config(module);
+}
+
+int SX1278_transmit(SX1278_t * module, uint8_t * txBuf, uint8_t length,
 		uint32_t timeout) {
 	if (SX1278_LoRaEntryTx(module, length, timeout)) {
 		return SX1278_LoRaTxPacket(module, txBuf, length, timeout);
@@ -260,15 +282,15 @@ int SX1278_transmit(SX1278_t *module, uint8_t *txBuf, uint8_t length,
 	return 0;
 }
 
-int SX1278_receive(SX1278_t *module, uint8_t length, uint32_t timeout) {
+int SX1278_receive(SX1278_t * module, uint8_t length, uint32_t timeout) {
 	return SX1278_LoRaEntryRx(module, length, timeout);
 }
 
-uint8_t SX1278_available(SX1278_t *module) {
+uint8_t SX1278_available(SX1278_t * module) {
 	return SX1278_LoRaRxPacket(module);
 }
 
-uint8_t SX1278_read(SX1278_t *module, uint8_t *rxBuf, uint8_t length) {
+uint8_t SX1278_read(SX1278_t * module, uint8_t * rxBuf, uint8_t length) {
 	if (length != module->readBytes)
 		length = module->readBytes;
 	memcpy(rxBuf, module->rxBuffer, length);
@@ -277,14 +299,14 @@ uint8_t SX1278_read(SX1278_t *module, uint8_t *rxBuf, uint8_t length) {
 	return length;
 }
 
-uint8_t SX1278_RSSI_LoRa(SX1278_t *module) {
+uint8_t SX1278_RSSI_LoRa(SX1278_t * module) {
 	uint32_t temp = 10;
 	temp = SX1278_SPIRead(module, LR_RegRssiValue); //Read RegRssiValue, Rssi value
 	temp = temp + 127 - 137; //127:Max RSSI, 137:RSSI offset
 	return (uint8_t) temp;
 }
 
-uint8_t SX1278_RSSI(SX1278_t *module) {
+uint8_t SX1278_RSSI(SX1278_t * module) {
 	uint8_t temp = 0xff;
 	temp = SX1278_SPIRead(module, RegRssiValue);
 	temp = 127 - (temp >> 1);	//127:Max RSSI
