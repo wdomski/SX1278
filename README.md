@@ -7,7 +7,7 @@ The initial work was based on DORJI.COM sample code and [SX1278_LoRa](https://gi
 
 # About the driver
 
-The driver was written in **C**. It has a hardware abstraction layer for easy porting to others MCUs.
+The driver was written in **C** and is compatible with **C++**. It has a hardware abstraction layer for easy porting to others MCUs.
 Also the hardware functions are defined as *__weak* so there is no need to change the driver files themselves.
 The driver is using HAL to communicate between STM32 SPI peripheral and LoRa module.
 
@@ -39,6 +39,13 @@ modified. The hardware dependant parts can be find in
 **SX1278_hw.c** and **SX1278_hw.h**.
 
 ## Logic layer
+
+## Sync word
+
+By default the driver uses the factory sync word (`0x12`). It can be changed
+during initialization using `SX1278_init_with_sync_word()` or at runtime
+with `SX1278_set_sync_word()`. Predefined values `SX127X_SYNC_WORD_FACTORY`
+and `SX127X_SYNC_WORD_LORAWAN` are available for convenience.
 
 # Final remarks
 
